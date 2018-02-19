@@ -21,8 +21,8 @@
  * http://www.boost.org/LICENSE_1_0.txt.                                      *
  ******************************************************************************/
 
-#ifndef FIRE_ATOM_H
-#define FIRE_ATOM_H
+#ifndef CAF_ATOM_VAL_H
+#define CAF_ATOM_VAL_H
 
 #include <string>
 #include <functional>
@@ -66,19 +66,7 @@ namespace caf {
 
     } // namespace detail
 
-
-/// The value type of atoms.
-    enum class atom_value : uint64_t {
-        /// @cond PRIVATE
-                dirty_little_hack = 31337
-        /// @endcond
-    };
-
-/// @relates atom_value
-    std::string to_string(const atom_value& what);
-
-    atom_value atom_from_string(const std::string& x);
-
+    using atom_value = uint64_t;
 /// Creates an atom from given string literal.
     template <size_t Size>
     constexpr atom_value atom(char const (&str)[Size]) {
@@ -86,70 +74,6 @@ namespace caf {
         static_assert(Size <= 11, "only 10 characters are allowed");
         return static_cast<atom_value>(detail::atom_val(str));
     }
+}
 
-/// Creates an atom from given string literal and return an integer
-/// representation of the atom..
-    template <size_t Size>
-    constexpr uint64_t atom_uint(char const (&str)[Size]) {
-        static_assert(Size <= 11, "only 10 characters are allowed");
-        return detail::atom_val(str);
-    }
-
-/// Converts an atom to its integer representation.
-    constexpr uint64_t atom_uint(atom_value x) {
-        return static_cast<uint64_t>(x);
-    }
-
-/// Lifts an `atom_value` to a compile-time constant.
-    template <atom_value V>
-    struct atom_constant {
-        constexpr atom_constant() {
-            // nop
-        }
-        /// Returns the wrapped value.
-        constexpr operator atom_value() const {
-            return V;
-        }
-        static constexpr uint64_t uint_value() {
-            return static_cast<uint64_t>(V);
-        }
-        /// Returns an instance *of this constant* (*not* an `atom_value`).
-        static const atom_constant value;
-    };
-
-    template <class T>
-    struct is_atom_constant {
-        static constexpr bool value = false;
-    };
-
-    template <atom_value X>
-    struct is_atom_constant<atom_constant<X>> {
-        static constexpr bool value = true;
-    };
-
-    template <atom_value V>
-    std::string to_string(const atom_constant<V>&) {
-        return to_string(V);
-    }
-
-    template <atom_value V>
-    const atom_constant<V> atom_constant<V>::value = atom_constant<V>{};
-
-/// Used for request operations.
-    using add_atom = atom_constant<atom("add")>;
-
-} // namespace caf
-
-namespace std {
-
-    template <>
-    struct hash<caf::atom_value> {
-        size_t operator()(caf::atom_value x) const {
-            hash<uint64_t> f;
-            return f(static_cast<uint64_t>(x));
-        }
-    };
-
-} // namespace std
-
-#endif //FIRE_ATOM_H
+#endif //CAF_ATOM_VAL_H
